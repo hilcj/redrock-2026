@@ -182,6 +182,13 @@ details.more-info summary { cursor: pointer; color: var(--accent); font-size: .8
 .route { display: grid; grid-template-columns: 3.2rem minmax(0, 1fr); gap: .2rem .7rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
 .grade { font-family: var(--font-num); font-weight: 700; font-size: .82rem; text-align: center; border-radius: 6px; color: var(--surface); padding: .12rem 0; align-self: start; margin-top: .15rem; }
 .g0 { background: var(--g0); } .g1 { background: var(--g1); } .g2 { background: var(--g2); } .g3 { background: var(--g3); }
+.gdist { margin: .55rem 0 .15rem; }
+.gdist .gbar { display: flex; height: 10px; border-radius: 4px; overflow: hidden; background: var(--line); gap: 2px; }
+.gdist .gbar i { display: block; height: 100%; }
+.gdist .glg { display: flex; flex-wrap: wrap; gap: .15rem .9rem; font-size: .78rem; color: var(--muted); margin-top: .3rem; font-variant-numeric: tabular-nums; }
+.gdist .glg span { display: inline-flex; align-items: center; gap: .3rem; }
+.gdist .glg i { width: .62rem; height: .62rem; border-radius: 2px; display: inline-block; }
+.gdist .glg b { color: var(--fg); font-weight: 700; }
 .rtop { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .55rem; }
 .rtop a { font-weight: 700; text-decoration: none; font-size: 1rem; }
 .rmeta { font-family: var(--font-num); font-size: .78rem; color: var(--muted); }
@@ -542,10 +549,16 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
     w.routes.forEach(function (r) { r.tags.forEach(function (t) { if (STYLE.indexOf(t) >= 0) counts[t] = (counts[t] || 0) + 1; }); });
     var top = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 6);
     var sport = w.routes.filter(function (r) { return /Sport/.test(r.t); }).length;
+    // grade mix: ≤5.6 / 5.7 / 5.8 / 5.9, same colours as the grade badges
+    var gc = [0, 0, 0, 0], GL = ['≤5.6', '5.7', '5.8', '5.9'];
+    w.routes.forEach(function (r) { gc[+gcls(r.g).slice(1)]++; });
+    var gt = w.routes.length || 1;
+    var gdist = '<div class="gdist" aria-label="难度分布"><div class="gbar">' + gc.map(function (c, i) { return c ? '<i class="g' + i + '" style="width:' + (c / gt * 100).toFixed(1) + '%"></i>' : ''; }).join('') + '</div>' +
+      '<div class="glg">' + gc.map(function (c, i) { return c ? '<span><i class="g' + i + '"></i>' + GL[i] + ' <b>' + c + '</b> 条 · ' + Math.round(c / gt * 100) + '%</span>' : ''; }).join('') + '</div></div>';
     return '<article class="wall" id="w-' + w.n + '" style="--c:' + col(l) + '">' +
       '<div class="whead"><span class="wnum">' + w.n + '</span><h4>' + esc(w.name) + '</h4></div>' +
       '<div class="pills"><span class="pill ' + (w.access === '内' ? 'in' : 'out') + '">' + (w.access === '内' ? '环路内 · 需预约' : '环路外 · 不用预约') + '</span>' +
-      '<span class="pill">热度第 ' + w.n + ' · ' + w.heat + ' 票</span><span class="pill">' + SUN[w.sun][0] + '</span><span class="pill">运动线 ' + sport + ' · 共 ' + w.routes.length + ' 条</span><span class="pill hit" data-hit hidden></span></div>' +
+      '<span class="pill">热度第 ' + w.n + ' · ' + w.heat + ' 票</span><span class="pill">' + SUN[w.sun][0] + '</span><span class="pill">运动线 ' + sport + ' · 共 ' + w.routes.length + ' 条</span><span class="pill hit" data-hit hidden></span></div>' + gdist +
       '<p class="about">' + esc(w.about) + '</p>' +
       '<details class="more-info"><summary>朝向和进场（' + esc(WALK[w.name]) + '）</summary><dl class="winfo"><div><dt>朝向 / 阳光</dt><dd>' + esc(w.sun_txt) + '</dd></div><div><dt>进场</dt><dd>' + esc(w.approach) + '</dd></div></dl></details>' +
       '<div class="wlinks"><a href="' + esc(w.url) + '" target="_blank" rel="noopener">MP 页面 ↗</a><a href="https://www.google.com/maps/search/?api=1&query=' + w.lat + ',' + w.lon + '" target="_blank" rel="noopener">Google 地图 ↗</a></div>' +
