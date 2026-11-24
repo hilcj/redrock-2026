@@ -1,0 +1,698 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>红石速查表</title>
+<meta name="theme-color" content="#b8432c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="红石速查">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Layout: three tabs (map / style guide / routes). Tab bar sits at the top on wide screens, fixed at the bottom on phones. Routes tab = filter panel + sticky result bar + wall cards grouped by parking. */
+:root {
+  --bg: #fbf7f4; --surface: #ffffff; --fg: #2b1f1b; --muted: #74625b; --line: #eaded8;
+  --accent: #b8432c; --accent-soft: #f6e4de; --varnish: #4a2f25; --map-bg: #f4ebe4; --road: #8a6f62; --trail: #b9a296;
+  --p1: #c9583d; --p2: #2f6f86; --p3: #7a5aa6; --p4: #3f7d4e; --p5: #a8661a; --pin-fg: #ffffff;
+  --g0: #3f7d4e; --g1: #2f6f86; --g2: #a8661a; --g3: #b8432c;
+  --warn: #9a3412; --warn-bg: #fdecdf; --good: #2f6b3d; --good-bg: #e3f1e5; --tag-bg: #f3ebe6; --info: #2f6f86; --info-bg: #e2eef3;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-num: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+  --tabh: 52px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1b1513; --surface: #241c19; --fg: #f1e7e2; --muted: #b3a199; --line: #3a2e2a;
+  --accent: #ef7b5f; --accent-soft: #3a231c; --varnish: #f0c9b6; --map-bg: #221a17; --road: #c4a596; --trail: #6e5a52;
+  --p1: #ef7b5f; --p2: #6fc0dc; --p3: #b9a0e0; --p4: #7cc78f; --p5: #e9a75a; --pin-fg: #1b1513;
+  --g0: #7cc78f; --g1: #6fc0dc; --g2: #e9a75a; --g3: #ef7b5f;
+  --warn: #f6a77f; --warn-bg: #3d2117; --good: #8fd39f; --good-bg: #1f3324; --tag-bg: #2f2522; --info: #8fcfe6; --info-bg: #1d2f37; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1b1513; --surface: #241c19; --fg: #f1e7e2; --muted: #b3a199; --line: #3a2e2a;
+  --accent: #ef7b5f; --accent-soft: #3a231c; --varnish: #f0c9b6; --map-bg: #221a17; --road: #c4a596; --trail: #6e5a52;
+  --p1: #ef7b5f; --p2: #6fc0dc; --p3: #b9a0e0; --p4: #7cc78f; --p5: #e9a75a; --pin-fg: #1b1513;
+  --g0: #7cc78f; --g1: #6fc0dc; --g2: #e9a75a; --g3: #ef7b5f;
+  --warn: #f6a77f; --warn-bg: #3d2117; --good: #8fd39f; --good-bg: #1f3324; --tag-bg: #2f2522; --info: #8fcfe6; --info-bg: #1d2f37; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.7; -webkit-text-size-adjust: 100%; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+a { color: var(--accent); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+.wrap { max-width: 880px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+header { padding-block: 1rem .6rem; }
+header h1 { margin: 0; font-size: 1.5rem; font-weight: 900; line-height: 1.3; }
+header p { margin: .15rem 0 0; color: var(--muted); font-size: .9rem; }
+
+/* tabs: top on wide screens, bottom on phones */
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabs .wrap { display: flex; gap: .3rem; }
+.tab { flex: 1; min-height: var(--tabh); display: flex; align-items: center; justify-content: center; gap: .4rem; text-decoration: none; color: var(--muted); font-weight: 700; font-size: .95rem; border-bottom: 3px solid transparent; }
+.tab svg { width: 20px; height: 20px; flex: none; }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+@media (max-width: 700px) {
+  .tabs { position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-bottom: 0; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .tab { flex-direction: column; gap: 0; font-size: .75rem; border-bottom: 0; border-top: 3px solid transparent; min-height: 58px; }
+  .tab[aria-selected="true"] { border-top-color: var(--accent); }
+  body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+}
+
+.panel { padding-block: 1rem 2.5rem; }
+h2 { font-size: 1.3rem; font-weight: 900; margin: .2rem 0 .3rem; text-wrap: balance; }
+h3 { font-size: 1.08rem; font-weight: 900; margin: 1.4rem 0 .2rem; text-wrap: balance; }
+.lead { margin: 0 0 1rem; color: var(--muted); font-size: .92rem; }
+p { margin: .3rem 0; }
+
+/* map tab */
+.mapbox { background: var(--map-bg); border: 1px solid var(--line); border-radius: 12px; overflow: auto; -webkit-overflow-scrolling: touch; }
+.mapbox svg { display: block; width: 100%; height: auto; }
+.mapbox.zoom svg { width: 210%; }
+.maptools { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .8rem; margin-top: .5rem; font-size: .8rem; color: var(--muted); }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: .45rem .9rem; min-height: 40px; cursor: pointer; font-size: .88rem; }
+svg .pin circle.b { stroke: var(--map-bg); stroke-width: 3; }
+svg .pin text.n { font-family: var(--font-num); font-weight: 700; fill: var(--pin-fg); font-size: 14px; text-anchor: middle; dominant-baseline: central; }
+svg .pin text.l { font-family: var(--font-body); font-weight: 700; font-size: 13px; fill: var(--fg); paint-order: stroke; stroke: var(--map-bg); stroke-width: 4px; }
+svg .pk rect { stroke: var(--map-bg); stroke-width: 2; }
+svg .pk text.P { font-family: var(--font-num); font-weight: 700; font-size: 13px; fill: var(--pin-fg); text-anchor: middle; dominant-baseline: central; }
+svg .pkl { font-size: 13px; font-weight: 900; paint-order: stroke; stroke: var(--map-bg); stroke-width: 4.5px; }
+svg .vcl { font-size: 12px; fill: var(--muted); paint-order: stroke; stroke: var(--map-bg); stroke-width: 4px; }
+.lots { display: grid; gap: 1rem; margin-top: 1.2rem; }
+.lot { border-left: 4px solid var(--c); padding: .1rem 0 .1rem .9rem; }
+.lot h3 { margin: 0; color: var(--c); }
+.lot .sub { font-size: .86rem; color: var(--muted); margin: 0 0 .2rem; }
+.lot ul { margin: .2rem 0 0; padding: 0; list-style: none; }
+.lot li a { display: block; padding: .35rem 0; text-decoration: none; }
+.lot li a b { text-decoration: underline; text-underline-offset: 2px; }
+.walk { color: var(--muted); font-size: .84rem; }
+.in { font-size: .72rem; border: 1px solid currentColor; border-radius: 999px; padding: 0 .45rem; margin-left: .35rem; white-space: nowrap; vertical-align: .1rem; }
+
+/* style tab */
+.style ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+.style li { margin: .45rem 0; }
+.style .where { color: var(--muted); font-size: .84rem; }
+.wl { font-weight: 700; }
+.note { background: var(--tag-bg); border-radius: 8px; padding: .6rem .8rem; font-size: .92rem; margin-top: .8rem; }
+
+/* filters */
+.filters { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1rem; display: grid; gap: .9rem; }
+.fgroup { display: grid; gap: .35rem; min-width: 0; }
+.flabel { font-size: .8rem; font-weight: 700; color: var(--muted); display: flex; justify-content: space-between; gap: .5rem; }
+.flabel output { color: var(--fg); font-family: var(--font-num); }
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.chip { border: 1px solid var(--line); background: var(--bg); padding: .35rem .75rem; min-height: 38px; border-radius: 999px; cursor: pointer; font-size: .88rem; display: inline-flex; align-items: center; gap: .3rem; }
+.chip b { font-family: var(--font-num); font-weight: 500; color: var(--muted); font-size: .78rem; }
+.chip[aria-pressed="true"] { background: var(--varnish); color: var(--surface); border-color: var(--varnish); }
+.chip[aria-pressed="true"] b { color: var(--surface); }
+.chip.star { border-color: var(--accent); font-weight: 700; }
+.chip i { width: .65rem; height: .65rem; border-radius: 50%; display: inline-block; }
+.more { justify-self: start; border: 0; background: none; color: var(--accent); padding: .2rem 0; cursor: pointer; font-size: .85rem; text-decoration: underline; }
+/* dual range slider */
+.range { position: relative; height: 40px; }
+.range .track { position: absolute; left: 14px; right: 14px; top: 18px; height: 5px; border-radius: 3px; background: var(--line); }
+.range .fill { position: absolute; top: 18px; height: 5px; border-radius: 3px; background: var(--accent); }
+.range input { position: absolute; left: 0; width: 100%; top: 6px; height: 28px; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.range input::-webkit-slider-runnable-track { background: none; height: 28px; }
+.range input::-moz-range-track { background: none; }
+.range input::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); cursor: pointer; }
+.range input::-moz-range-thumb { pointer-events: auto; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); cursor: pointer; }
+.range input:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--fg); }
+.ticks { position: relative; height: 1.1rem; font-family: var(--font-num); font-size: .7rem; color: var(--muted); }
+.ticks span { position: absolute; left: calc(14px + (100% - 28px) * var(--i) / 10); transform: translateX(-50%); white-space: nowrap; }
+.resbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--tabh) + 1px); z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); margin-top: .8rem; padding-block: .5rem; display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .8rem; font-size: .88rem; }
+.resbar b { font-family: var(--font-num); }
+.resbar .act { margin-left: auto; display: flex; gap: .5rem; }
+.resbar button { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: .3rem .7rem; min-height: 36px; cursor: pointer; font-size: .84rem; }
+@media (max-width: 700px) { .resbar { top: env(safe-area-inset-top, 0px); } }
+.empty { color: var(--muted); padding: 1rem 0; }
+/* location filter */
+.flabel output#locOut { font-family: var(--font-body); font-weight: 700; text-align: right; min-width: 0; }
+details.fmap summary { cursor: pointer; color: var(--accent); font-size: .88rem; padding: .3rem 0; min-height: 36px; }
+details.fmap .mapbox { max-height: 70vh; }
+#fsvg .pin, #fsvg .lotbtn { cursor: pointer; }
+#fsvg .pin.off { opacity: .28; }
+#fsvg .pin.on circle.b { stroke: var(--fg); stroke-width: 5; }
+#fsvg .pin.on text.l, #fsvg .pin.inlot text.l { text-decoration: underline; }
+#fsvg .lotbtn.on rect { stroke: var(--fg); stroke-width: 4; }
+#fsvg .pin:focus-visible, #fsvg .lotbtn:focus-visible { outline: none; }
+#fsvg .pin:focus-visible circle.b, #fsvg .lotbtn:focus-visible rect { stroke: var(--accent); stroke-width: 5; }
+.locs { display: grid; gap: .45rem; margin-top: .3rem; }
+.locrow { display: flex; flex-wrap: wrap; gap: .35rem; padding-left: .6rem; border-left: 3px solid var(--c); }
+.chip.lotchip { font-weight: 700; }
+.chip.wallchip { font-size: .82rem; padding: .3rem .65rem; min-height: 36px; }
+.chip .wn { font-family: var(--font-num); font-weight: 700; color: var(--c); }
+.chip[aria-pressed="true"] .wn { color: var(--surface); }
+
+/* wall cards */
+.grp { margin-top: 1.6rem; display: grid; gap: 1rem; }
+.grp > h3 { color: var(--c); border-bottom: 2px solid var(--c); padding-bottom: .2rem; margin: 0; }
+.wall { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.1rem; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--tabh) + 56px); }
+@media (max-width: 700px) { .wall { scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 60px); padding: .9rem .9rem; } }
+.wall.flash { box-shadow: 0 0 0 3px var(--c); }
+@media (prefers-reduced-motion: no-preference) { .wall { transition: box-shadow .3s; } }
+.whead { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; }
+.wnum { font-family: var(--font-num); font-weight: 700; color: var(--pin-fg); background: var(--c); width: 1.9rem; height: 1.9rem; border-radius: 50%; display: grid; place-items: center; font-size: .95rem; flex: none; }
+.whead h4 { margin: 0; font-size: 1.15rem; font-weight: 900; line-height: 1.3; }
+.pills { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .45rem; }
+.pill { font-size: .74rem; padding: .05rem .55rem; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.pill.in { color: var(--p2); border-color: currentColor; } .pill.out { color: var(--good); border-color: currentColor; }
+.pill.hit { color: var(--accent); border-color: currentColor; font-weight: 700; }
+.wlinks { display: flex; gap: 1rem; font-size: .85rem; margin-top: .4rem; }
+.wlinks a { text-decoration: none; padding: .2rem 0; }
+details.more-info { margin-top: .5rem; font-size: .9rem; }
+details.more-info summary { cursor: pointer; color: var(--accent); font-size: .88rem; padding: .3rem 0; }
+.about { margin: .4rem 0 0; max-width: 75ch; font-size: .92rem; }
+.winfo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .4rem 1.4rem; margin: .6rem 0 .2rem; font-size: .88rem; }
+.winfo div { min-width: 0; }
+.winfo dt { font-size: .74rem; color: var(--muted); font-weight: 700; letter-spacing: .04em; }
+.winfo dd { margin: 0; }
+.wtags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .6rem; }
+.routes { list-style: none; padding: 0; margin: .8rem 0 0; display: grid; border-top: 1px solid var(--line); }
+.route { display: grid; grid-template-columns: 3.2rem minmax(0, 1fr); gap: .2rem .7rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
+.grade { font-family: var(--font-num); font-weight: 700; font-size: .82rem; text-align: center; border-radius: 6px; color: var(--surface); padding: .12rem 0; align-self: start; margin-top: .15rem; }
+.g0 { background: var(--g0); } .g1 { background: var(--g1); } .g2 { background: var(--g2); } .g3 { background: var(--g3); }
+.rtop { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .55rem; }
+.rtop a { font-weight: 700; text-decoration: none; font-size: 1rem; }
+.rmeta { font-family: var(--font-num); font-size: .78rem; color: var(--muted); }
+.attrs { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+.attr { font-size: .76rem; border-radius: 6px; padding: .05rem .5rem; border: 1px solid var(--line); white-space: nowrap; }
+.attr.dense { background: var(--good-bg); color: var(--good); border-color: transparent; }
+.attr.normal { background: var(--info-bg); color: var(--info); border-color: transparent; }
+.attr.sparse { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+.attr.tr, .attr.unknown { color: var(--muted); }
+.rnote { font-size: .88rem; margin-top: .3rem; opacity: .9; }
+.rtags { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .35rem; }
+.tag { font-size: .74rem; padding: .02rem .45rem; border-radius: 4px; background: var(--accent-soft); color: var(--varnish); white-space: nowrap; }
+.tag.w { background: var(--warn-bg); color: var(--warn); }
+.tag.ok { background: var(--good-bg); color: var(--good); }
+.tag.m { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+.tag.hit { outline: 2px solid var(--accent); }
+.back { font-size: .88rem; margin-top: .6rem; display: inline-block; padding: .5rem 0; min-height: 40px; border: 0; background: none; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
+.offl { font-size: .8rem; color: var(--good); margin-top: .2rem; }
+.offl.bad { color: var(--warn); }
+</style>
+
+<header class="wrap">
+  <h1>红石速查表</h1>
+  <p id="sub">≤5.9 运动线和顶绳线 · 11 月 26–27 日</p>
+  <p id="offl" class="offl" hidden></p>
+</header>
+
+<nav class="tabs" aria-label="页面切换">
+  <div class="wrap" role="tablist">
+    <a class="tab" role="tab" href="#map" id="t-map" aria-controls="p-map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>停车场地图</a>
+    <a class="tab" role="tab" href="#style" id="t-style" aria-controls="p-style"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/></svg>按风格找墙</a>
+    <a class="tab" role="tab" href="#routes" id="t-routes" aria-controls="p-routes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>线路 + 筛选</a>
+  </div>
+</nav>
+
+<main>
+<!-- TAB 1: MAP -->
+<section class="panel wrap" id="p-map" role="tabpanel" aria-labelledby="t-map">
+  <h2>哪个停车场覆盖哪些墙</h2>
+  <p class="lead"><b>环路内</b>（Calico I、Calico II、Sandstone Quarry）要用 9–10 点的 Scenic Drive 预约进去；<b>环路外</b>（Red Springs、Kraft Mountain）在 Calico Basin，不用预约。圆点颜色 = 停哪个停车场，虚线只表示归属，不是实际的路。墙号是热度排名：把这面墙所有线路在 MP 上的评分票数加起来，1 号最热门。点墙号看线路。</p>
+  <div class="mapbox" id="mapbox"><svg id="svg" role="img" aria-label="停车场和岩壁位置图"></svg></div>
+  <div class="maptools"><button type="button" class="btn" id="zoomBtn">放大地图</button><span>放大后可以左右拖动。路网来自 OpenStreetMap，岩壁坐标来自 Mountain Project。</span></div>
+  <div class="lots" id="lots"></div>
+</section>
+
+<!-- TAB 2: STYLE -->
+<section class="panel wrap style" id="p-style" role="tabpanel" aria-labelledby="t-style" hidden>
+  <h2>想玩什么风格，去哪面墙</h2>
+  <p class="lead">墙名都能点，会跳到“线路”页里这面墙。看完按浏览器返回就回到这里。</p>
+
+  <h3>多段运动线</h3>
+  <p>全程有挂片和锚点的多段。第一次玩多段，从前两个开始。</p>
+  <ul>
+    <li><a class="wl" href="#routes" data-w="Man&#39;s Best Friend Area">Man's Best Friend</a> <span class="where">Sandstone Quarry</span>：Man's Best Friend 5.7、Kibbles 'n bits 5.8，最适合第一次。注意进场要先绳降进走廊。</li>
+    <li><a class="wl" href="#routes" data-w="The J Wall">The J Wall</a> <span class="where">Calico I</span>：Alas, Poor Yorick 5.7+，两段，第二段接 Hamlet 的 Guildenstern，和 Hamlet 一起玩很顺。</li>
+    <li><a class="wl" href="#routes" data-w="Riding Hood Wall">Riding Hood Wall</a> <span class="where">Red Springs</span>：Big Bad Wolf 5.9 最热门（会排队），另有 The Woodsman 5.9。</li>
+    <li><a class="wl" href="#routes" data-w="Black Wall (aka Happy Acres)">Black Wall</a> <span class="where">Red Springs</span>：Soulshine 5.9，评分 ★3.6。要走 20–30 分钟。</li>
+    <li><a class="wl" href="#routes" data-w="Coco Crag">Coco Crag</a> <span class="where">Red Springs</span>：Adventure Guppies 5.8+、Coco Petals 5.9+。</li>
+      <li><a class="wl" href="#routes" data-w="The Great Red Book Area">Great Red Book</a> <span class="where">Calico II</span>：多段运动线最多的一面。Johnny Law 5.8 两段（多段里评分最高）、Dangling Participles 5.8 两段（挂片很密）、Seams Novel 5.8、Ground up Vocabulary 5.8+，最长的是 Collaborative Overlap 5.9+，2–4 段。下午晒太阳。</li>
+      <li><a class="wl" href="#routes" data-w="The Fringe">The Fringe</a> <span class="where">Kraft Mountain</span>：Hippie Vest 5.9 两段、Bear My Soul 5.9+ 两段。线比较新，还会掉石头，戴头盔。</li>
+  </ul>
+
+  <h3>屋檐 / 翻悬垂（出片）</h3>
+  <p>红石 5.9 以内很少有整面悬垂的墙，能玩到的多是“线路中间翻一个小屋檐”。想拍照选这几条。</p>
+  <ul>
+    <li><a class="wl" href="#routes" data-w="The Hamlet">The Hamlet</a> <span class="where">Calico I</span>：The Die is Cast 5.8、When the Blood Burns 5.8，都是翻小屋檐。</li>
+    <li><a class="wl" href="#routes" data-w="Civilization Crag">Civilization Crag</a> <span class="where">Calico I</span>：Ming Dynasty 5.9+ 抓大洞翻屋檐；Sultans and Viziers 5.8、Five Charter Oath 5.8- 是大把手翻小悬垂。</li>
+    <li><a class="wl" href="#routes" data-w="Hunter S. Thompson Dome">HST Dome</a> <span class="where">Calico II</span>：Walking the Vertical Bolts 5.9 最后翻一个小屋檐，点很好。</li>
+    <li><a class="wl" href="#routes" data-w="The Gallery">The Gallery</a> <span class="where">Calico II</span>：红石有名的陡墙。5.9 以内只有几条短线，可以当热身，顺便看高手爬悬垂。</li>
+      <li><a class="wl" href="#routes" data-w="The Great Red Book Area">Great Red Book</a> <span class="where">Calico II</span>：The Front Matter 5.9+，两段板面中间翻一个刺激的屋檐。</li>
+      <li><a class="wl" href="#routes" data-w="Family Crag">Family Crag</a> <span class="where">Kraft Mountain</span>：Family Affairs 5.8，陡的起步接大把手。</li>
+      <li><a class="wl" href="#routes" data-w="Child&#39;s Play Wall">Child's Play</a> <span class="where">Calico I</span>：Capture the Flag 5.7，锚点前翻一个小屋檐。</li>
+  </ul>
+
+  <h3>板面 / 练脚法</h3>
+  <p>板面靠脚踩摩擦，手上没什么点。红石的板面墙挂片普遍偏稀，先从挂片密的开始。</p>
+  <ul>
+    <li><a class="wl" href="#routes" data-w="The Slab">The Slab</a> <span class="where">Calico I</span>：整面墙都是板面，5.5–5.8，离停车场最近之一。最稳的是 Smear Campaign 5.8（挂片密）和三条 5.5。</li>
+    <li><a class="wl" href="#routes" data-w="Ultraman Wall">Ultraman Wall</a> <span class="where">Calico I</span>：经典长板面，Ultraman 5.8+、Science Patrol 5.8。挂片稀、线很长，要 70 米绳或双绳。</li>
+    <li><a class="wl" href="#routes" data-w="Civilization Crag">Civilization Crag</a> <span class="where">Calico I</span>：Silk Road 5.6、Super Tsardom 5.4。</li>
+    <li><a class="wl" href="#routes" data-w="Man&#39;s Best Friend Area">Man's Best Friend</a> <span class="where">Sandstone Quarry</span>：多段板面。</li>
+    <li><a class="wl" href="#routes" data-w="Black Corridor Lower Left">Black Corridor 下层左</a> <span class="where">Calico II</span>：The CEL 5.9，考平衡。</li>
+    <li><a class="wl" href="#routes" data-w="The Wake-Up Wall">Wake-Up Wall</a> <span class="where">Sandstone Quarry</span>：Poundcake 5.8、Crack of Noon 5.8。</li>
+      <li><a class="wl" href="#routes" data-w="Running Man Wall">Running Man</a> <span class="where">Sandstone Quarry</span>：Frictiony Face Panty Waist 5.9+，持续的摩擦板面（★2.8）；Eat My Shorts 5.8- 更简单、挂片更密。全天晒太阳。</li>
+      <li><a class="wl" href="#routes" data-w="Classic Rock Right (SW)">Classic Rock 右</a> <span class="where">Calico I</span>：Don't Stop Belaying 5.9、Wannabe 5.8+，挂片很密的技术板面。</li>
+  </ul>
+
+  <h3>大把手 / 像岩馆</h3>
+  <p>点大、动作舒服，最接近室内的感觉，适合第一天找手感。</p>
+  <ul>
+    <li><a class="wl" href="#routes" data-w="Civilization Crag">Civilization Crag</a> <span class="where">Calico I</span>：东南面的 Sultans and Viziers、Five Charter Oath、The Three Kingdoms，MP 原话就是“像岩馆线”。</li>
+    <li><a class="wl" href="#routes" data-w="Panty Wall">Panty Wall</a> <span class="where">Calico I</span>：Brief Encounter 5.8（全墙最热门）、Full Monty 5.8。</li>
+    <li><a class="wl" href="#routes" data-w="The Hamlet">The Hamlet</a> <span class="where">Calico I</span>：Rosencrantz 5.6。</li>
+      <li><a class="wl" href="#routes" data-w="Child&#39;s Play Wall">Child's Play</a> <span class="where">Calico I</span>：Rounders 5.6、Simon Says 5.6，墙上很多大“鸡头”可以抓。</li>
+      <li><a class="wl" href="#routes" data-w="The Great Red Book Area">Great Red Book</a> <span class="where">Calico II</span>：Johnny Law 5.8、Epilogue 5.7，漆面大把手很多。</li>
+  </ul>
+
+  <h3>烟囱</h3>
+  <p>身体卡在两面岩壁之间往上蹭，室内基本玩不到。</p>
+  <ul>
+    <li><a class="wl" href="#routes" data-w="Rift Corridor Left">Rift Corridor（烟囱走廊）</a> <span class="where">Calico I</span>：一整条窄走廊都能用烟囱技术，The Rift 5.9+、Containment 5.9、Beyond Reproach 5.8-。离停车场很近。</li>
+    <li><a class="wl" href="#routes" data-w="Sunny and Steep">Sunny and Steep</a> <span class="where">Kraft Mountain</span>：Sport Chimney 5.8，红石少见的挂片烟囱。缺点是要走 30–60 分钟。</li>
+    <li><a class="wl" href="#routes" data-w="The Hamlet">The Hamlet</a> <span class="where">Calico I</span>：Sea of Troubles 5.9，烟囱起步。</li>
+    <li><a class="wl" href="#routes" data-w="Civilization Crag">Civilization Crag</a> <span class="where">Calico I</span>：This is Sparta 5.9。</li>
+    <li><a class="wl" href="#routes" data-w="Cannibal Crag">Cannibal Crag</a> <span class="where">Red Springs</span>：Ma and Pa in Kettle 5.7。</li>
+    <li><a class="wl" href="#routes" data-w="Moderate Mecca Upper">Moderate Mecca 上层</a> <span class="where">Red Springs</span>：Atavistic Impulse 5.9。</li>
+      <li><a class="wl" href="#routes" data-w="Cactus Massacre">Cactus Massacre</a> <span class="where">Calico I</span>：End of the Cactus 5.5，钝棱角最后接一个“小烟囱”，最简单的烟囱体验。</li>
+      <li><a class="wl" href="#routes" data-w="Child&#39;s Play Wall">Child's Play</a> <span class="where">Calico I</span>：Capture the Flag 5.7，板面/烟囱起步。</li>
+  </ul>
+
+  <h3>指洞 / 小边 / 捏点</h3>
+  <p>红石砂岩大多是漆面边和薄片，指洞不多。下面这几条是能摸到洞的。</p>
+  <ul>
+    <li><a class="wl" href="#routes" data-w="Hunter S. Thompson Dome">HST Dome</a> <span class="where">Calico II</span>：Mother's Milk 5.8，从蜂窝状的指洞起步，下午还能晒太阳。</li>
+    <li><a class="wl" href="#routes" data-w="Rift Corridor Left">Rift Corridor（烟囱走廊）</a> <span class="where">Calico I</span>：Split Happens 5.9，穿过蜂窝洞和黑色漆面。</li>
+    <li><a class="wl" href="#routes" data-w="The Wake-Up Wall">Wake-Up Wall</a> <span class="where">Sandstone Quarry</span>：The Big Short 5.9 有指洞，Skid Mark 5.9+ 有捏点。</li>
+    <li><a class="wl" href="#routes" data-w="Civilization Crag">Civilization Crag</a> <span class="where">Calico I</span>：Ming Dynasty 5.9+ 抓大洞，Manifest Destiny 5.9+ 小边。</li>
+    <li><a class="wl" href="#routes" data-w="Black Corridor Lower Left">Black Corridor 下层左</a> <span class="where">Calico II</span>：Frosted Flakes 5.9，小边加薄片。</li>
+      <li><a class="wl" href="#routes" data-w="Classic Rock Right (SW)">Classic Rock 右</a> <span class="where">Calico I</span>：Sends in Low Places 5.8，穿过指洞和好点的短线。</li>
+      <li><a class="wl" href="#routes" data-w="The Great Red Book Area">Great Red Book</a> <span class="where">Calico II</span>：Sold Out 5.9，光滑黑漆面上的完美小边。</li>
+  </ul>
+
+  <h3>棱角 / 内角</h3>
+  <ul>
+    <li><a class="wl" href="#routes" data-w="Panty Wall">Panty Wall</a> <span class="where">Calico I</span>：Panty Prow 5.6，沿棱角爬，暴露感强。</li>
+    <li><a class="wl" href="#routes" data-w="Civilization Crag">Civilization Crag</a> <span class="where">Calico I</span>：Super Tsardom 5.4、The Sun Never Sets 5.7。</li>
+    <li><a class="wl" href="#routes" data-w="The Hamlet">The Hamlet</a> <span class="where">Calico I</span>：Guildenstern 5.5，板面棱角。</li>
+    <li><a class="wl" href="#routes" data-w="Black Corridor Upper Right">Black Corridor 上层右</a> <span class="where">Calico II</span>：757 2x4 5.7，内角。</li>
+      <li><a class="wl" href="#routes" data-w="Cactus Massacre">Cactus Massacre</a> <span class="where">Calico I</span>：End of the Cactus 5.5 钝棱角；Never Kiss a Cactus 5.8 左向内角。</li>
+      <li><a class="wl" href="#routes" data-w="Classic Rock Right (SW)">Classic Rock 右</a> <span class="where">Calico I</span>：Pretty High for a Climb Guy 5.8+，裂缝/棱角，95 英尺。</li>
+  </ul>
+
+  <h3>热身 / 第一次户外先锋</h3>
+  <p>挂片密、难度低、没什么坑的线，每天第一条可以从这里挑。</p>
+  <ul>
+    <li><a class="wl" href="#routes" data-w="Panty Wall">Panty Wall</a> <span class="where">Calico I</span>：The Last Panty 5.7，MP 推荐的第一次先锋线；Silk Panties 5.7。</li>
+    <li><a class="wl" href="#routes" data-w="The Slab">The Slab</a> <span class="where">Calico I</span>：Slab One、To Slab or Not、Slab Line，都是 5.5。</li>
+    <li><a class="wl" href="#routes" data-w="The Hamlet">The Hamlet</a> <span class="where">Calico I</span>：The Plays the Thing、Readiness is All、Thinking Makes it So，都是 5.4。</li>
+    <li><a class="wl" href="#routes" data-w="Magic Bus">Magic Bus</a> <span class="where">Calico II</span>：Neon Sunset 5.8，挂片密。</li>
+    <li><a class="wl" href="#routes" data-w="Hunter S. Thompson Dome">HST Dome</a> <span class="where">Calico II</span>：Crazy Eights 5.8，常被当热身，但很长，下放前绳尾打结。</li>
+    <li><a class="wl" href="#routes" data-w="Ultraman Wall">Ultraman Wall</a> <span class="where">Calico I</span>：Scent of the Ultraman 5.7，这面墙的热身线。</li>
+      <li><a class="wl" href="#routes" data-w="Amusement Park">Amusement Park</a> <span class="where">Calico I</span>：一排 35 英尺的 5.7，挂钩锚点能直接下放或顶绳，最适合第一次。缺点是朝北，冬天下午冷。</li>
+      <li><a class="wl" href="#routes" data-w="Meetup Wall">Meetup Wall</a> <span class="where">Calico II</span>：Safety First 5.6 和几条 5.7，50 英尺，墙顶能绳降下来架顶绳。</li>
+      <li><a class="wl" href="#routes" data-w="Cactus Massacre">Cactus Massacre</a> <span class="where">Calico I</span>：End of the Cactus、Peyote and the Magic Stairs，都是 5.5，挂片密。</li>
+      <li><a class="wl" href="#routes" data-w="The Great Red Book Area">Great Red Book</a> <span class="where">Calico II</span>：See Spot Run 5.6、Listening Comprehension 5.7、Recalcitrant Goldfish 5.7，都是补过挂片的入门先锋线。</li>
+      <li><a class="wl" href="#routes" data-w="The Mass Production Wall">Mass Production</a> <span class="where">Sandstone Quarry</span>：Parts is Parts、Battery Powered、Hit and Run，常被连起来热身（但全天背阴）。</li>
+  </ul>
+
+  <h3>11 月要晒太阳 / 要阴凉</h3>
+  <p>11 月底早上很冷，下午有太阳的地方会舒服很多。</p>
+  <ul>
+    <li><b>晒太阳</b>：<a class="wl" href="#routes" data-w="Panty Wall">Panty Wall</a>、<a class="wl" href="#routes" data-w="Ultraman Wall">Ultraman</a>、<a class="wl" href="#routes" data-w="The J Wall">J Wall</a>、<a class="wl" href="#routes" data-w="Running Man Wall">Running Man</a>（几乎全天）、<a class="wl" href="#routes" data-w="Cactus Massacre">Cactus Massacre</a>、<a class="wl" href="#routes" data-w="Child&#39;s Play Wall">Child's Play</a>、<a class="wl" href="#routes" data-w="Meetup Wall">Meetup</a>、<a class="wl" href="#routes" data-w="The Great Red Book Area">Great Red Book</a>（下午）、<a class="wl" href="#routes" data-w="Family Crag">Family Crag</a>（上午）、<a class="wl" href="#routes" data-w="The Gallery">Gallery</a>、<a class="wl" href="#routes" data-w="Sunny and Steep">Sunny and Steep</a>、<a class="wl" href="#routes" data-w="Civilization Crag">Civilization</a>（西南和东南面）、<a class="wl" href="#routes" data-w="Hunter S. Thompson Dome">HST Dome</a>（下午）、<a class="wl" href="#routes" data-w="Cannibal Crag">Cannibal</a>（东南侧上午）、<a class="wl" href="#routes" data-w="Riding Hood Wall">Riding Hood</a>（上午，下午进阴影）、<a class="wl" href="#routes" data-w="Magic Bus">Magic Bus</a>、<a class="wl" href="#routes" data-w="Moderate Mecca Upper">Moderate Mecca</a>、<a class="wl" href="#routes" data-w="The Slab">The Slab</a>（中午到下午）、<a class="wl" href="#routes" data-w="Man&#39;s Best Friend Area">Man's Best Friend</a>（中午到下午）。最后这几面墙是按地形数据和 MP 照片推测的。</li>
+    <li><b>背阴</b>：Black Corridor 三面（<a class="wl" href="#routes" data-w="Black Corridor Lower Left">下左</a>、<a class="wl" href="#routes" data-w="Black Corridor Upper Right">上右</a>、<a class="wl" href="#routes" data-w="Black Corridor Upper Left">上左</a>）、<a class="wl" href="#routes" data-w="Rift Corridor Left">Rift Corridor</a>、<a class="wl" href="#routes" data-w="The Wake-Up Wall">Wake-Up Wall</a>、<a class="wl" href="#routes" data-w="Coco Crag">Coco</a>、<a class="wl" href="#routes" data-w="Black Wall (aka Happy Acres)">Black Wall</a>、Civilization 主墙、<a class="wl" href="#routes" data-w="The Pier">The Pier</a>、<a class="wl" href="#routes" data-w="The Mass Production Wall">Mass Production</a>（还当风）、<a class="wl" href="#routes" data-w="Amusement Park">Amusement Park</a>（下午）、Classic Rock 右的走廊里。</li>
+  </ul>
+  <p class="note">MP 上的一个搭配：冷天上午先去背阴的 Black Corridor，下午转到 HST Dome 晒太阳，两面墙走同一条进场路。</p>
+</section>
+
+<!-- TAB 3: ROUTES -->
+<section class="panel wrap" id="p-routes" role="tabpanel" aria-labelledby="t-routes" hidden>
+  <div class="filters" id="filters">
+    <div class="fgroup">
+      <div class="flabel"><span>难度</span><output id="gradeOut">5.4 – 5.9+</output></div>
+      <div class="range" id="range"><div class="track"></div><div class="fill" id="rfill"></div>
+        <input type="range" id="gmin" min="0" max="10" step="1" value="0" aria-label="最低难度">
+        <input type="range" id="gmax" min="0" max="10" step="1" value="10" aria-label="最高难度"></div>
+      <div class="ticks" aria-hidden="true"><span style="--i:0">5.4</span><span style="--i:1">5.5</span><span style="--i:2">5.6</span><span style="--i:3">5.7</span><span style="--i:6">5.8</span><span style="--i:9">5.9</span><span style="--i:10">5.9+</span></div>
+    </div>
+    <div class="fgroup"><div class="flabel"><span>位置：停车场或具体的墙（可多选）</span><output id="locOut"></output></div>
+      <details class="fmap" id="fmapD" open><summary>在地图上点选</summary>
+        <div class="mapbox" id="fmapbox"><svg id="fsvg" role="group" aria-label="点墙号或停车场 P 来选择位置"></svg></div>
+        <div class="maptools"><button type="button" class="btn" id="fzoomBtn">放大地图</button><span>点墙号选这面墙，点 P 选整个停车场，再点一次取消。</span></div>
+      </details>
+      <div class="locs" id="fLoc"></div>
+    </div>
+    <div class="fgroup"><div class="flabel"><span>风格（选多个 = 同时满足）</span></div><div class="chips" id="fTags"></div><button type="button" class="more" id="moreTags">显示全部风格</button></div>
+    <div class="fgroup"><div class="flabel"><span>挂片密度</span></div><div class="chips" id="fBd"></div></div>
+    <div class="fgroup"><div class="flabel"><span>线路长度</span></div><div class="chips" id="fLen"></div></div>
+    <div class="fgroup"><div class="flabel"><span>阳光</span></div><div class="chips" id="fSun"></div></div>
+  </div>
+  <div class="resbar" id="resbar"></div>
+  <div id="groups"><p class="empty">正在加载线路…</p></div>
+  <p class="empty" id="none" hidden>没有符合筛选的线路。放宽一下难度或去掉几个标签试试。</p>
+</section>
+</main>
+<footer class="wrap">数据：Mountain Project（线路、评分、描述、挂片数），OpenStreetMap（路网）。挂片密度是按“长度 ÷ 挂片数”算的（≤8 英尺一把算密，8–11.5 正常，更稀算稀），再结合 MP 的 R/X 评级和评论修正；没写挂片数的线标“不确定”。走路时间带“估”的是按距离估的。</footer>
+
+<script>
+(function () {
+  var LOTS = [
+    { id: 1, name: 'Calico I（第一停车场）', short: 'Calico I', inside: true, park: 'Calico I', walls: ["The Slab", "Rift Corridor Left", "The J Wall", "The Hamlet", "Ultraman Wall", "Panty Wall", "Civilization Crag", "Cactus Massacre", "Classic Rock Right (SW)", "Child's Play Wall", "Amusement Park"],
+      sub: 'Scenic Drive 进去第一个停车场。墙最多，大部分走 10–20 分钟。' },
+    { id: 2, name: 'Calico II（第二停车场）', short: 'Calico II', inside: true, park: 'Calico Hills II', walls: ["Black Corridor Lower Left", "Black Corridor Upper Right", "Black Corridor Upper Left", "Hunter S. Thompson Dome", "The Gallery", "Magic Bus", "The Great Red Book Area", "Meetup Wall"],
+      sub: '第一个停车场再往前一点。Black Corridor 三面墙和 HST Dome 走同一条进场路。' },
+    { id: 3, name: 'Sandstone Quarry', short: 'Sandstone Q.', inside: true, park: 'Sandstone Quarry Parking', walls: ["Man's Best Friend Area", "The Wake-Up Wall", "Running Man Wall", "The Walrus", "The Pier", "The Mass Production Wall"],
+      sub: '环路再往里，离第二停车场约 1 英里车程。' },
+    { id: 4, name: 'Red Springs（Calico Basin）', short: 'Red Springs', inside: false, park: 'Red Spring', walls: ["Cannibal Crag", "Riding Hood Wall", "Coco Crag", "Moderate Mecca Upper", "Black Wall (aka Happy Acres)"],
+      sub: '环路外，不用预约。可以在 Scenic Drive 预约时间之前或之后来。' },
+    { id: 5, name: 'Kraft Mountain（Calico Basin）', short: 'Kraft Mtn', inside: false, park: 'Kraft Mountain Parking Area', walls: ["Sunny and Steep", "Family Crag", "The Fringe"],
+      sub: '环路外，不用预约。Family Crag 和 The Fringe 离停车场近；Sunny and Steep 要绕山走 30–60 分钟。' }
+  ];
+  var WALK = { "Panty Wall": '15–20 分钟', "Riding Hood Wall": '进场短（MP 没写时间）', "Black Corridor Lower Left": '约 10–15 分钟（估）', "Cannibal Crag": '5–10 分钟', "Civilization Crag": '10–15 分钟', "The Gallery": '约 15 分钟（估）',
+    "Magic Bus": '约 15 分钟（估）', "The Hamlet": '15–20 分钟', "Black Corridor Upper Right": '约 10–15 分钟（估）', "Moderate Mecca Upper": 'MP 没写停哪；按地图最近的是 Red Springs，去之前在 MP 上确认',
+    "The Wake-Up Wall": '约 10 分钟，爬升 200 英尺', "Man's Best Friend Area": '150 码，但要先绳降进走廊', "Sunny and Steep": '30–60 分钟，爬升 600 英尺', "Black Wall (aka Happy Acres)": '20–30 分钟', "Coco Crag": '约 15 分钟，爬升 400 英尺',
+    "The Slab": '约 10 分钟（估），最近的墙之一', "Black Corridor Upper Left": '约 10–15 分钟（估）', "Rift Corridor Left": '约 10 分钟（估），很近', "Ultraman Wall": '约 20 分钟（估）', "Hunter S. Thompson Dome": '最多 15 分钟', "The J Wall": '15–20 分钟',
+    "Family Crag": "约 15–20 分钟（估），进 Gateway Canyon", "The Fringe": "约 20–30 分钟（估），要过两次河床、爬一点石头", "Running Man Wall": "约 20 分钟（估），有一两步手脚并用", "The Walrus": "约 15 分钟，在 Wake-Up Wall 后面", "The Pier": "5 分钟", "The Mass Production Wall": "约 15 分钟，0.7 英里，爬升 200 英尺", "Cactus Massacre": "10 分钟", "Classic Rock Right (SW)": "约 10 分钟（估），离停车场很近", "Child's Play Wall": "约 15 分钟（估），在 Cactus Massacre 右边沟里往上", "Amusement Park": "15 分钟，在 Panty Wall 正下方", "The Great Red Book Area": "约 20–25 分钟（估），穿过 Black Corridor 再上坡", "Meetup Wall": "约 20 分钟（估），过了 HST Dome 再往上" };
+  var SUN = { sunny: ['晒太阳', '--p5'], half: ['半晒半阴', '--g2'], shade: ['背阴', '--p2'], unknown: ['朝向未知', '--muted'] };
+  var G = ['5.4', '5.5', '5.6', '5.7', '5.7+', '5.8-', '5.8', '5.8+', '5.9-', '5.9', '5.9+'];
+  var EASY = '入门/热身';
+  var TAGS_MAIN = ['多段', EASY, '板面', '垂直面', '悬垂', '屋檐', '烟囱', '指洞', '大把手', '小边', '棱角', '内角'];
+  var TAGS_MORE = ['渐陡', '鼓包', '裂缝', '捏点', '薄片', '漆面', '长线', '短线', '多变', '岩馆感', '翻越', '暴露感', '起步难点'];
+  var STYLE = TAGS_MAIN.concat(TAGS_MORE).filter(function (t) { return t !== EASY; });
+  var BD = { dense: ['挂片密', '--good'], normal: ['正常', '--info'], sparse: ['挂片稀', '--warn'], tr: ['只能顶绳', '--muted'], unknown: ['不确定', '--muted'] };
+  var LEN = { short: '≤60 ft 短', mid: '61–100 ft', long: '>100 ft 长（注意绳长）', unk: '长度未知' };
+
+  var D, byN = {}, lotOf = {}, F, showAllTags = false;
+  function blank() { return { gmin: 0, gmax: 10, tags: {}, bd: {}, len: {}, lot: {}, wall: {}, sun: {} }; }
+  F = blank();
+  try { var sv = JSON.parse(localStorage.getItem('rr-cs-filter2') || 'null'); if (sv && typeof sv.gmin === 'number') F = Object.assign(blank(), sv); } catch (e) {}
+  (function sanitize() {
+    var ok = { tags: TAGS_MAIN.concat(TAGS_MORE), bd: Object.keys(BD), len: Object.keys(LEN), lot: ['1', '2', '3', '4', '5'], wall: Array.from({ length: 99 }, function (_, i) { return String(i + 1); }), sun: ['sunny', 'half', 'shade', 'unknown'] };
+    Object.keys(ok).forEach(function (g) { var o = {}; Object.keys(F[g] || {}).forEach(function (k) { if (ok[g].indexOf(k) >= 0) o[k] = 1; }); F[g] = o; });
+    F.gmin = Math.max(0, Math.min(10, F.gmin | 0)); F.gmax = Math.max(F.gmin, Math.min(10, F.gmax | 0));
+  })();
+  function save() { try { localStorage.setItem('rr-cs-filter2', JSON.stringify(F)); } catch (e) {} }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function gcls(g) { var m = /^5\.(\d+)/.exec(g); if (!m) return 'g0'; var n = +m[1]; return n <= 6 ? 'g0' : 'g' + Math.min(3, n - 6); }
+  function gidx(g) { var b = g.split(' ')[0], i = G.indexOf(b); if (i < 0) i = G.indexOf(b.replace(/[+-]$/, '')); return i < 0 ? 0 : i; }
+  function col(l) { return 'var(--p' + l.id + ')'; }
+  function plain(t) { return t.replace(/^[!+]/, ''); }
+  function isEasy(r) { return r.tags.some(function (t) { return /入门|热身|首先锋/.test(t); }); }
+  function hasTag(r, k) { return k === EASY ? isEasy(r) : k === '多段' ? (r.p > 1 || r.tags.some(function (t) { return plain(t) === k; })) : r.tags.some(function (t) { return plain(t) === k; }); }
+  function lenKey(r) { var L = parseInt(r.len, 10); if (!L) return 'unk'; return L <= 60 ? 'short' : L <= 100 ? 'mid' : 'long'; }
+  function any(o) { return Object.keys(o).length > 0; }
+  function active() { return F.gmin > 0 || F.gmax < 10 || any(F.tags) || any(F.bd) || any(F.len) || any(F.lot) || any(F.wall) || any(F.sun); }
+  function locOk(w) { return (!any(F.lot) && !any(F.wall)) || !!F.lot[lotOf[w.n].id] || !!F.wall[w.n]; }
+  function routeOk(r, w) {
+    var gi = gidx(r.g);
+    if (gi < F.gmin || gi > F.gmax) return false;
+    if (!Object.keys(F.tags).every(function (k) { return hasTag(r, k); })) return false;
+    if (any(F.bd) && !F.bd[r.bd]) return false;
+    if (any(F.len) && !F.len[lenKey(r)]) return false;
+    if (!locOk(w)) return false;
+    if (any(F.sun) && !F.sun[w.sun]) return false;
+    return true;
+  }
+
+  /* ---------- map ---------- */
+  // pickMode = true: pins and P markers toggle the location filter instead of linking to a wall
+  function drawMap(svg, pickMode) {
+    var m = D.map, h = [];
+    svg.setAttribute('viewBox', '0 0 ' + m.w + ' ' + m.h);
+    m.minor.forEach(function (d) { h.push('<path d="' + d + '" fill="none" stroke="var(--road)" stroke-opacity=".4" stroke-width="1.6"/>'); });
+    m.trails.forEach(function (t) { h.push('<path d="' + t.d + '" fill="none" stroke="var(--trail)" stroke-width="1.2" stroke-dasharray="3 3"/>'); });
+    m.roads.forEach(function (r) { h.push('<path d="' + r.d + '" fill="none" stroke="var(--road)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'); });
+    var parkPt = {};
+    m.parks.forEach(function (p) { if (p.name) parkPt[p.name] = p; });
+    LOTS.forEach(function (l) {
+      var p = parkPt[l.park]; if (!p) return;
+      l.walls.forEach(function (n) { var w = byN[n]; h.push('<line x1="' + p.x + '" y1="' + p.y + '" x2="' + w.x + '" y2="' + w.y + '" stroke="' + col(l) + '" stroke-opacity=".55" stroke-width="1.6" stroke-dasharray="4 3"/>'); });
+    });
+    h.push('<g class="pk"><rect x="' + (m.vc[0] - 8) + '" y="' + (m.vc[1] - 8) + '" width="16" height="16" rx="8" fill="var(--muted)"/></g><text class="vcl" x="' + (m.vc[0] + 12) + '" y="' + (m.vc[1] + 4) + '">游客中心 / Scenic Drive 入口</text>');
+    var P = D.walls.map(function (w) { return { w: w, x: w.x, y: w.y }; }), MIN = 32;
+    for (var it = 0; it < 300; it++) {
+      for (var i = 0; i < P.length; i++) for (var j = i + 1; j < P.length; j++) {
+        var a = P[i], b = P[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy);
+        if (d < MIN) { if (d < 0.01) { dx = Math.cos(i + j); dy = Math.sin(i + j); d = 1; } var push = (MIN - d) / 2 / d; a.x -= dx * push; a.y -= dy * push; b.x += dx * push; b.y += dy * push; }
+      }
+      P.forEach(function (p) {
+        p.x += (p.w.x - p.x) * 0.01; p.y += (p.w.y - p.y) * 0.01;
+        LOTS.forEach(function (l) { var q = parkPt[l.park]; if (!q) return; var dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx * dx + dy * dy) || 1; if (d < 26) { p.x += dx / d * (26 - d); p.y += dy / d * (26 - d); } });
+      });
+    }
+    function lw(s) { var n = 0; for (var k = 0; k < s.length; k++) n += s.charCodeAt(k) > 255 ? 13 : 7.4; return n; }
+    var boxes = P.map(function (p) { return [p.x - 14, p.y - 14, p.x + 14, p.y + 14]; }), lotLabels = [];
+    LOTS.forEach(function (l) {
+      var p = parkPt[l.park]; if (!p) return;
+      var t = l.name.replace(/（.*/, '') + ' P';
+      boxes.push([p.x - 10, p.y - 10, p.x + 10, p.y + 10]);
+      lotLabels.push({ l: l, p: p, t: t, L: lw(t) });
+    });
+    function overlap(bx) {
+      var s = 0;
+      boxes.forEach(function (o) { var w = Math.min(bx[2], o[2]) - Math.max(bx[0], o[0]), hh = Math.min(bx[3], o[3]) - Math.max(bx[1], o[1]); if (w > 0 && hh > 0) s += w * hh; });
+      if (bx[0] < 0 || bx[2] > m.w || bx[1] < 0) s += 5000;
+      return s;
+    }
+    function pick(x, y, L, r) {
+      var cand = [
+        { x: x + r + 3, y: y + 4.5, a: 'start', b: [x + r + 2, y - 8, x + r + 4 + L, y + 8] },
+        { x: x - r - 3, y: y + 4.5, a: 'end', b: [x - r - 4 - L, y - 8, x - r - 2, y + 8] },
+        { x: x, y: y - r - 6, a: 'middle', b: [x - L / 2, y - r - 18, x + L / 2, y - r - 2] },
+        { x: x, y: y + r + 15, a: 'middle', b: [x - L / 2, y + r + 3, x + L / 2, y + r + 19] },
+        { x: x + r, y: y - r, a: 'start', b: [x + r - 1, y - r - 12, x + r + 1 + L, y - r + 4] },
+        { x: x + r, y: y + r + 9, a: 'start', b: [x + r - 1, y + r - 3, x + r + 1 + L, y + r + 13] },
+        { x: x - r, y: y - r, a: 'end', b: [x - r - 1 - L, y - r - 12, x - r + 1, y - r + 4] },
+        { x: x - r, y: y + r + 9, a: 'end', b: [x - r - 1 - L, y + r - 3, x - r + 1, y + r + 13] }];
+      var c = cand.map(function (c, k) { return { c: c, s: overlap(c.b) + k * 0.5 }; }).sort(function (a, b) { return a.s - b.s; })[0].c;
+      boxes.push(c.b); return c;
+    }
+    lotLabels.forEach(function (o) {
+      var c = pick(o.p.x, o.p.y, o.L, 11);
+      h.push((pickMode ? '<g class="pk lotbtn" data-lot="' + o.l.id + '" role="button" tabindex="0" aria-label="' + esc(o.l.name) + '"><circle cx="' + o.p.x + '" cy="' + o.p.y + '" r="20" fill="transparent"/>' : '<g class="pk">') +
+        '<rect x="' + (o.p.x - 10) + '" y="' + (o.p.y - 10) + '" width="20" height="20" rx="4" fill="' + col(o.l) + '"/><text class="P" x="' + o.p.x + '" y="' + o.p.y + '">P</text></g>' +
+        '<text class="pkl" x="' + c.x.toFixed(1) + '" y="' + c.y.toFixed(1) + '" text-anchor="' + c.a + '" fill="' + col(o.l) + '">' + esc(o.t) + '</text>');
+    });
+    P.sort(function (a, b) { return a.y - b.y; }).forEach(function (p) {
+      var w = p.w, l = lotOf[w.n], c = pick(p.x, p.y, lw(w.short), 14);
+      var moved = Math.abs(p.x - w.x) + Math.abs(p.y - w.y) > 4;
+      h.push((pickMode ? '<g class="pin" data-n="' + w.n + '" role="button" tabindex="0" aria-label="' + esc(w.n + ' ' + w.name) + '">' : '<a href="#w-' + w.n + '" class="pin" aria-label="' + esc(w.n + ' ' + w.name) + '">') +
+        (moved ? '<line x1="' + w.x + '" y1="' + w.y + '" x2="' + p.x.toFixed(1) + '" y2="' + p.y.toFixed(1) + '" stroke="var(--fg)" stroke-opacity=".5" stroke-width="1.2"/><circle cx="' + w.x + '" cy="' + w.y + '" r="2.5" fill="var(--fg)"/>' : '') +
+        '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="20" fill="transparent"/>' +
+        '<circle class="b" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="13" fill="' + col(l) + '"/><text class="n" x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '">' + w.n + '</text>' +
+        '<text class="l" x="' + c.x.toFixed(1) + '" y="' + c.y.toFixed(1) + '" text-anchor="' + c.a + '">' + esc(w.short) + '</text>' + (pickMode ? '</g>' : '</a>'));
+    });
+    svg.innerHTML = h.join('');
+  }
+  function lotsHTML() {
+    return LOTS.map(function (l) {
+      return '<div class="lot" style="--c:' + col(l) + '"><h3>' + esc(l.name) + '<span class="in">' + (l.inside ? '环路内 · 要预约' : '环路外 · 不用预约') + '</span></h3>' +
+        '<p class="sub">' + esc(l.sub) + '</p><ul>' + l.walls.map(function (n) {
+          var w = byN[n];
+          return '<li><a href="#w-' + n + '"><b>' + n + ' ' + esc(w.name) + '</b> <span class="walk">· ' + SUN[w.sun][0] + ' · ' + esc(WALK[w.name]) + '</span></a></li>';
+        }).join('') + '</ul></div>';
+    }).join('');
+  }
+
+  /* ---------- wall cards ---------- */
+  function tag(t) {
+    var cls = t[0] === '!' ? 'tag w' : t[0] === '+' ? 'tag ok' : 'tag';
+    return '<span class="' + cls + '" data-t="' + esc(plain(t)) + '">' + esc(plain(t)) + '</span>';
+  }
+  function bdText(r) {
+    var s = BD[r.bd][0];
+    if (r.bd === 'tr') return '只能顶绳';
+    var d = [];
+    if (r.b) d.push(r.b + ' 把');
+    if (r.fpb && r.bd !== 'tr') d.push('约 ' + Math.round(r.fpb) + ' ft 一把');
+    return (r.bd === 'unknown' ? '挂片密度不确定' : s) + (d.length ? '（' + d.join('，') + '）' : '');
+  }
+  function routeHTML(r, i) {
+    var meta = [r.t + (r.p > 1 ? ' · ' + r.p + ' 段' : ''), '★' + (r.s >= 0 ? r.s.toFixed(1) : '–') + (r.v != null ? ' · ' + r.v + ' 票' : '')];
+    var L = parseInt(r.len, 10);
+    return '<li class="route" data-i="' + i + '"><span class="grade ' + gcls(r.g) + '">' + esc(r.g.split(' ')[0]) + '</span><div>' +
+      '<div class="rtop"><a href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(r.name) + '</a>' + (/ (R|PG13|X)$/.test(r.g) ? '<span class="tag w">' + esc(r.g.split(' ')[1]) + '</span>' : '') + '<span class="rmeta">' + esc(meta.join(' · ')) + '</span></div>' +
+      '<div class="attrs"><span class="attr">长度 ' + (L ? L + ' ft' + (r.p > 1 ? '（总长）' : '') : '未知') + '</span><span class="attr ' + r.bd + '">' + esc(bdText(r)) + '</span></div>' +
+      (r.note ? '<div class="rnote">' + esc(r.note) + '</div>' : '') +
+      '<div class="rtags">' + r.tags.map(tag).join('') + '</div></div></li>';
+  }
+  function wallHTML(w, l) {
+    var counts = {};
+    w.routes.forEach(function (r) { r.tags.forEach(function (t) { if (STYLE.indexOf(t) >= 0) counts[t] = (counts[t] || 0) + 1; }); });
+    var top = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 6);
+    var sport = w.routes.filter(function (r) { return /Sport/.test(r.t); }).length;
+    return '<article class="wall" id="w-' + w.n + '" style="--c:' + col(l) + '">' +
+      '<div class="whead"><span class="wnum">' + w.n + '</span><h4>' + esc(w.name) + '</h4></div>' +
+      '<div class="pills"><span class="pill ' + (w.access === '内' ? 'in' : 'out') + '">' + (w.access === '内' ? '环路内 · 需预约' : '环路外 · 不用预约') + '</span>' +
+      '<span class="pill">热度第 ' + w.n + ' · ' + w.heat + ' 票</span><span class="pill">' + SUN[w.sun][0] + '</span><span class="pill">运动线 ' + sport + ' · 共 ' + w.routes.length + ' 条</span><span class="pill hit" data-hit hidden></span></div>' +
+      '<p class="about">' + esc(w.about) + '</p>' +
+      '<details class="more-info"><summary>朝向和进场（' + esc(WALK[w.name]) + '）</summary><dl class="winfo"><div><dt>朝向 / 阳光</dt><dd>' + esc(w.sun_txt) + '</dd></div><div><dt>进场</dt><dd>' + esc(w.approach) + '</dd></div></dl></details>' +
+      '<div class="wlinks"><a href="' + esc(w.url) + '" target="_blank" rel="noopener">MP 页面 ↗</a><a href="https://www.google.com/maps/search/?api=1&query=' + w.lat + ',' + w.lon + '" target="_blank" rel="noopener">Google 地图 ↗</a></div>' +
+      '<div class="wtags">' + top.map(function (t) { return '<span class="tag m">' + esc(t) + ' ×' + counts[t] + '</span>'; }).join('') + '</div>' +
+      '<ul class="routes">' + w.routes.map(routeHTML).join('') + '</ul><button type="button" class="back totop">↑ 回到筛选（顶部）</button></article>';
+  }
+
+  /* ---------- filters ---------- */
+  function chip(group, key, label, count, extra) {
+    return '<button type="button" class="chip' + (extra || '') + '" data-g="' + group + '" data-k="' + esc(key) + '" aria-pressed="false">' + label + (count != null ? '<b>' + count + '</b>' : '') + '</button>';
+  }
+  function buildFilters() {
+    var all = []; D.walls.forEach(function (w) { w.routes.forEach(function (r) { all.push([r, w]); }); });
+    function cnt(fn) { return all.filter(function (x) { return fn(x[0], x[1]); }).length; }
+    var tagHtml = TAGS_MAIN.map(function (t) { var c = cnt(function (r) { return hasTag(r, t); }); return c ? chip('tags', t, esc(t), c, t === '多段' ? ' star' : '') : ''; }).join('') +
+      TAGS_MORE.map(function (t) { var c = cnt(function (r) { return hasTag(r, t); }); return c ? chip('tags', t, esc(t), c, ' xtra') : ''; }).join('');
+    document.getElementById('fTags').innerHTML = tagHtml;
+    document.getElementById('fBd').innerHTML = Object.keys(BD).map(function (k) { return chip('bd', k, '<i style="background:var(' + BD[k][1] + ')"></i>' + BD[k][0], cnt(function (r) { return r.bd === k; })); }).join('');
+    document.getElementById('fLen').innerHTML = Object.keys(LEN).map(function (k) { var c = cnt(function (r) { return lenKey(r) === k; }); return c ? chip('len', k, LEN[k], c) : ''; }).join('');
+    document.getElementById('fLoc').innerHTML = LOTS.map(function (l) {
+      return '<div class="locrow" style="--c:' + col(l) + '">' + chip('lot', l.id, '<i style="background:' + col(l) + '"></i>' + esc(l.short) + ' 全部', cnt(function (r, w) { return lotOf[w.n] === l; }), ' lotchip') +
+        l.walls.map(function (n) { var w = byN[n]; return chip('wall', n, '<span class="wn">' + n + '</span>' + esc(w.short), w.routes.length, ' wallchip'); }).join('') + '</div>';
+    }).join('');
+    var fs = document.getElementById('fsvg');
+    function pickOn(e) {
+      var p = e.target.closest('.pin, .lotbtn'); if (!p) return;
+      var g = p.dataset.n ? 'wall' : 'lot', k = p.dataset.n || p.dataset.lot;
+      if (F[g][k]) delete F[g][k]; else F[g][k] = 1;
+      apply();
+    }
+    fs.addEventListener('click', pickOn);
+    fs.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickOn(e); } });
+    document.getElementById('fzoomBtn').addEventListener('click', function () {
+      var mb = document.getElementById('fmapbox'); mb.classList.toggle('zoom');
+      this.textContent = mb.classList.contains('zoom') ? '缩小地图' : '放大地图';
+    });
+    document.getElementById('fSun').innerHTML = Object.keys(SUN).map(function (k) { return chip('sun', k, SUN[k][0], cnt(function (r, w) { return w.sun === k; })); }).join('');
+    document.getElementById('filters').addEventListener('click', function (e) {
+      var b = e.target.closest('.chip'); if (!b) return;
+      var o = F[b.dataset.g], k = b.dataset.k;
+      if (o[k]) delete o[k]; else o[k] = 1;
+      apply();
+    });
+    var mt = document.getElementById('moreTags');
+    mt.addEventListener('click', function () { showAllTags = !showAllTags; syncMore(); });
+    var a = document.getElementById('gmin'), b = document.getElementById('gmax');
+    function onRange(e) {
+      var lo = +a.value, hi = +b.value;
+      if (lo > hi) { if (e.target === a) { a.value = hi; lo = hi; } else { b.value = lo; hi = lo; } }
+      F.gmin = lo; F.gmax = hi; apply();
+    }
+    a.addEventListener('input', onRange); b.addEventListener('input', onRange);
+  }
+  function syncMore() {
+    document.querySelectorAll('#fTags .xtra').forEach(function (c) { c.hidden = !showAllTags && !F.tags[c.dataset.k]; });
+    document.getElementById('moreTags').textContent = showAllTags ? '收起' : '显示全部风格';
+  }
+  function syncControls() {
+    document.querySelectorAll('#filters .chip').forEach(function (b) { b.setAttribute('aria-pressed', !!F[b.dataset.g][b.dataset.k]); });
+    var a = document.getElementById('gmin'), b = document.getElementById('gmax');
+    a.value = F.gmin; b.value = F.gmax;
+    document.getElementById('gradeOut').textContent = F.gmin === F.gmax ? G[F.gmin] : G[F.gmin] + ' – ' + G[F.gmax];
+    var f = document.getElementById('rfill'), W = 'calc(100% - 28px)';
+    f.style.left = 'calc(14px + ' + W + ' * ' + (F.gmin / 10) + ')';
+    f.style.width = 'calc(' + W + ' * ' + ((F.gmax - F.gmin) / 10) + ')';
+    syncMore();
+    var locOn = any(F.lot) || any(F.wall);
+    document.querySelectorAll('#fsvg .pin').forEach(function (p) {
+      var w = byN[p.dataset.n], on = locOn && locOk(w);
+      p.classList.toggle('on', !!F.wall[w.n]); p.classList.toggle('inlot', !F.wall[w.n] && on); p.classList.toggle('off', locOn && !on);
+      p.setAttribute('aria-pressed', F.wall[w.n] ? 'true' : 'false');
+    });
+    document.querySelectorAll('#fsvg .lotbtn').forEach(function (p) { var on = !!F.lot[p.dataset.lot]; p.classList.toggle('on', on); p.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    var names = LOTS.filter(function (l) { return F.lot[l.id]; }).map(function (l) { return l.short; })
+      .concat(Object.keys(F.wall).sort(function (a, b) { return a - b; }).map(function (n) { return byN[n].short; }));
+    document.getElementById('locOut').textContent = names.length ? names.join('、') : '全部';
+  }
+  function apply() {
+    syncControls(); save();
+    var on = active(), shownW = 0, shownR = 0, total = 0;
+    D.walls.forEach(function (w) {
+      var el = document.getElementById('w-' + w.n), lis = el.querySelectorAll('.route'), n = 0;
+      w.routes.forEach(function (r, i) {
+        total++;
+        var ok = routeOk(r, w); lis[i].hidden = !ok; if (ok) n++;
+        lis[i].querySelectorAll('.rtags .tag').forEach(function (t) { t.classList.toggle('hit', !!F.tags[t.dataset.t]); });
+      });
+      el.hidden = n === 0;
+      var hit = el.querySelector('[data-hit]'); hit.hidden = !on || n === 0; hit.textContent = '符合 ' + n + ' / ' + w.routes.length;
+      if (n) { shownW++; shownR += n; }
+    });
+    document.querySelectorAll('.grp').forEach(function (g) { g.hidden = !g.querySelector('.wall:not([hidden])'); });
+    document.getElementById('none').hidden = shownR > 0;
+    document.getElementById('resbar').innerHTML = '<span>显示 <b>' + shownW + '</b> 面墙 · <b>' + shownR + '</b> 条线' + (on ? '（共 ' + total + '）' : '') + '</span>' +
+      '<span class="act">' + (on ? '<button type="button" id="clr">清除筛选</button>' : '') + '<button type="button" id="toF">↑ 筛选</button></span>';
+    var c = document.getElementById('clr'); if (c) c.addEventListener('click', function () { F = blank(); apply(); });
+    document.getElementById('toF').addEventListener('click', toTop);
+  }
+
+  /* ---------- tabs / routing ---------- */
+  var TABS = ['map', 'style', 'routes'], cur = '';
+  function show(t) {
+    TABS.forEach(function (k) {
+      document.getElementById('p-' + k).hidden = k !== t;
+      document.getElementById('t-' + k).setAttribute('aria-selected', k === t ? 'true' : 'false');
+    });
+    cur = t;
+  }
+  function routeHash() {
+    var h = location.hash.slice(1), m = /^w-(\d+)$/.exec(h);
+    if (m && D) {
+      show('routes');
+      var el = document.getElementById(h);
+      if (el && el.hidden) { F = blank(); apply(); }
+      if (el) { el.scrollIntoView({ block: 'start' }); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); }
+      return;
+    }
+    var t = TABS.indexOf(h) >= 0 ? h : 'map';
+    var changed = t !== cur; show(t);
+    if (changed) window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', routeHash);
+  document.getElementById('zoomBtn').addEventListener('click', function () {
+    var mb = document.getElementById('mapbox'); mb.classList.toggle('zoom');
+    this.textContent = mb.classList.contains('zoom') ? '缩小地图' : '放大地图';
+  });
+  routeHash();
+
+  function toTop() { window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
+  document.getElementById('groups').addEventListener('click', function (e) { if (e.target.closest('.totop')) toTop(); });
+  (window.__RR_DATA ? Promise.resolve(window.__RR_DATA) : fetch('data/crags.json').then(function (r) { return r.json(); })).then(function (d) {
+    D = d; var byName = {};
+    document.getElementById('sub').textContent = d.walls.length + ' 面墙 · ' + d.walls.reduce(function (a, w) { return a + w.routes.length; }, 0) + ' 条 ≤5.9 运动线和顶绳线 · 11 月 26–27 日';
+    D.walls.forEach(function (w) { byN[w.n] = w; byName[w.name] = w; });
+    // walls are listed by name; their numbers (popularity rank) come from the data
+    LOTS.forEach(function (l) { l.walls = l.walls.map(function (nm) { return byName[nm].n; }).sort(function (a, b) { return a - b; }); l.walls.forEach(function (n) { lotOf[n] = l; }); });
+    document.querySelectorAll('a[data-w]').forEach(function (a) { var w = byName[a.dataset.w]; if (w) a.setAttribute('href', '#w-' + w.n); });
+    drawMap(document.getElementById('svg'), false);
+    drawMap(document.getElementById('fsvg'), true);
+    document.getElementById('lots').innerHTML = lotsHTML();
+    document.getElementById('groups').innerHTML = LOTS.map(function (l) {
+      return '<div class="grp" style="--c:' + col(l) + '"><h3>' + esc(l.name) + '</h3>' + l.walls.map(function (n) { return wallHTML(byN[n], l); }).join('') + '</div>';
+    }).join('');
+    buildFilters(); apply(); routeHash();
+  }).catch(function () { document.getElementById('groups').innerHTML = '<p class="empty">数据没加载出来，刷新一下试试。</p>'; });
+})();
+</script>
+
+<script>
+/* Offline: service worker caches the page + data; the badge says whether this copy is ready to use without signal. */
+(function () {
+  var el = document.getElementById('offl');
+  function say(t, bad) { el.hidden = false; el.textContent = t; el.className = 'offl' + (bad ? ' bad' : ''); }
+  if (!('serviceWorker' in navigator)) { say('这个浏览器不支持离线缓存', true); return; }
+  navigator.serviceWorker.register('sw.js').then(function () { return navigator.serviceWorker.ready; }).then(function () {
+    return caches.keys().then(function (ks) {
+      return Promise.all(ks.map(function (k) { return caches.open(k).then(function (c) { return c.match('data/crags.json'); }); }));
+    });
+  }).then(function (hits) {
+    if (hits.some(Boolean)) say('✓ 已存好，没信号也能打开');
+    else say('正在存离线副本…联网再打开一次', true);
+  }).catch(function () { say('离线缓存没成功，联网再打开一次', true); });
+})();
+</script>
