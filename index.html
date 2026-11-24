@@ -131,6 +131,15 @@ svg .vcl { font-size: 12px; fill: var(--muted); paint-order: stroke; stroke: var
 .flabel output#locOut { font-family: var(--font-body); font-weight: 700; text-align: right; min-width: 0; }
 details.fmap summary { cursor: pointer; color: var(--accent); font-size: .88rem; padding: .3rem 0; min-height: 36px; }
 details.fmap .mapbox { max-height: 70vh; }
+svg .pin .cnt { display: none; }
+svg.filt .pin.match .cnt { display: inline; }
+svg .pin .cnt circle { fill: var(--fg); stroke: var(--map-bg); stroke-width: 2; }
+svg .pin .cnt text { font-family: var(--font-num); font-weight: 700; font-size: 11px; fill: var(--bg); text-anchor: middle; dominant-baseline: central; }
+svg.filt .pin.nomatch { opacity: .18; }
+svg.filt .pin.match circle.b { stroke: var(--fg); stroke-width: 3; }
+.maphint { font-size: .86rem; line-height: 1.5; margin: .5rem 0; padding: .5rem .7rem; border-radius: 8px; background: var(--accent-soft); color: var(--fg); }
+.maphint a, .maphint button { color: var(--accent); font: inherit; font-weight: 700; background: none; border: 0; padding: 0 0 0 .4rem; cursor: pointer; text-decoration: underline; }
+.chip.wallchip.nm { opacity: .4; }
 #fsvg .pin, #fsvg .lotbtn { cursor: pointer; }
 #fsvg .pin.off { opacity: .28; }
 #fsvg .pin.on circle.b { stroke: var(--fg); stroke-width: 5; }
@@ -214,6 +223,7 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
 <section class="panel wrap" id="p-map" role="tabpanel" aria-labelledby="t-map">
   <h2>哪个停车场覆盖哪些墙</h2>
   <p class="lead"><b>环路内</b>（Calico I、Calico II、Sandstone Quarry）要用 9–10 点的 Scenic Drive 预约进去；<b>环路外</b>（Red Springs、Kraft Mountain）在 Calico Basin，不用预约。圆点颜色 = 停哪个停车场，虚线只表示归属，不是实际的路。墙号是热度排名：把这面墙所有线路在 MP 上的评分票数加起来，1 号最热门。点墙号看线路。</p>
+  <p class="maphint" id="mapHint" hidden></p>
   <div class="mapbox" id="mapbox"><svg id="svg" role="img" aria-label="停车场和岩壁位置图"></svg></div>
   <div class="maptools"><button type="button" class="btn" id="zoomBtn">放大地图</button><span>放大后可以左右拖动。路网来自 OpenStreetMap，岩壁坐标来自 Mountain Project。</span></div>
   <div class="lots" id="lots"></div>
@@ -343,6 +353,7 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
     </div>
     <div class="fgroup"><div class="flabel"><span>位置：停车场或具体的墙（可多选）</span><output id="locOut"></output></div>
       <details class="fmap" id="fmapD" open><summary>在地图上点选</summary>
+        <p class="maphint" id="fmapHint" hidden></p>
         <div class="mapbox" id="fmapbox"><svg id="fsvg" role="group" aria-label="点墙号或停车场 P 来选择位置"></svg></div>
         <div class="maptools"><button type="button" class="btn" id="fzoomBtn">放大地图</button><span>点墙号选这面墙，点 P 选整个停车场，再点一次取消。</span></div>
       </details>
@@ -410,13 +421,15 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
   function any(o) { return Object.keys(o).length > 0; }
   function active() { return F.gmin > 0 || F.gmax < 10 || any(F.tags) || any(F.bd) || any(F.len) || any(F.lot) || any(F.wall) || any(F.sun); }
   function locOk(w) { return (!any(F.lot) && !any(F.wall)) || !!F.lot[lotOf[w.n].id] || !!F.wall[w.n]; }
-  function routeOk(r, w) {
+  // filters other than location: these drive the map highlighting
+  function styleOn() { return F.gmin > 0 || F.gmax < 10 || any(F.tags) || any(F.bd) || any(F.len) || any(F.sun); }
+  function routeOk(r, w, skipLoc) {
     var gi = gidx(r.g);
     if (gi < F.gmin || gi > F.gmax) return false;
     if (!Object.keys(F.tags).every(function (k) { return hasTag(r, k); })) return false;
     if (any(F.bd) && !F.bd[r.bd]) return false;
     if (any(F.len) && !F.len[lenKey(r)]) return false;
-    if (!locOk(w)) return false;
+    if (!skipLoc && !locOk(w)) return false;
     if (any(F.sun) && !F.sun[w.sun]) return false;
     return true;
   }
@@ -483,11 +496,12 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
     P.sort(function (a, b) { return a.y - b.y; }).forEach(function (p) {
       var w = p.w, l = lotOf[w.n], c = pick(p.x, p.y, lw(w.short), 14);
       var moved = Math.abs(p.x - w.x) + Math.abs(p.y - w.y) > 4;
-      h.push((pickMode ? '<g class="pin" data-n="' + w.n + '" role="button" tabindex="0" aria-label="' + esc(w.n + ' ' + w.name) + '">' : '<a href="#w-' + w.n + '" class="pin" aria-label="' + esc(w.n + ' ' + w.name) + '">') +
+      h.push((pickMode ? '<g class="pin" data-n="' + w.n + '" role="button" tabindex="0" aria-label="' + esc(w.n + ' ' + w.name) + '">' : '<a href="#w-' + w.n + '" class="pin" data-n="' + w.n + '" aria-label="' + esc(w.n + ' ' + w.name) + '">') +
         (moved ? '<line x1="' + w.x + '" y1="' + w.y + '" x2="' + p.x.toFixed(1) + '" y2="' + p.y.toFixed(1) + '" stroke="var(--fg)" stroke-opacity=".5" stroke-width="1.2"/><circle cx="' + w.x + '" cy="' + w.y + '" r="2.5" fill="var(--fg)"/>' : '') +
         '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="20" fill="transparent"/>' +
         '<circle class="b" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="13" fill="' + col(l) + '"/><text class="n" x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '">' + w.n + '</text>' +
-        '<text class="l" x="' + c.x.toFixed(1) + '" y="' + c.y.toFixed(1) + '" text-anchor="' + c.a + '">' + esc(w.short) + '</text>' + (pickMode ? '</g>' : '</a>'));
+        '<text class="l" x="' + c.x.toFixed(1) + '" y="' + c.y.toFixed(1) + '" text-anchor="' + c.a + '">' + esc(w.short) + '</text>' +
+        '<g class="cnt"><circle cx="' + (p.x + 12).toFixed(1) + '" cy="' + (p.y - 12).toFixed(1) + '" r="8"/><text x="' + (p.x + 12).toFixed(1) + '" y="' + (p.y - 12).toFixed(1) + '"></text></g>' + (pickMode ? '</g>' : '</a>'));
     });
     svg.innerHTML = h.join('');
   }
@@ -625,10 +639,43 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
     });
     document.querySelectorAll('.grp').forEach(function (g) { g.hidden = !g.querySelector('.wall:not([hidden])'); });
     document.getElementById('none').hidden = shownR > 0;
+    var filt = styleOn();
     document.getElementById('resbar').innerHTML = '<span>显示 <b>' + shownW + '</b> 面墙 · <b>' + shownR + '</b> 条线' + (on ? '（共 ' + total + '）' : '') + '</span>' +
-      '<span class="act">' + (on ? '<button type="button" id="clr">清除筛选</button>' : '') + '<button type="button" id="toF">↑ 筛选</button></span>';
+      '<span class="act">' + (on ? '<button type="button" id="clr">清除筛选</button>' : '') + (filt ? '<button type="button" id="toMap">看地图</button>' : '') + '<button type="button" id="toF">↑ 筛选</button></span>';
     var c = document.getElementById('clr'); if (c) c.addEventListener('click', function () { F = blank(); apply(); });
     document.getElementById('toF').addEventListener('click', toTop);
+    var tm = document.getElementById('toMap'); if (tm) tm.addEventListener('click', function () { document.getElementById('fmapD').open = true; document.getElementById('fmapHint').scrollIntoView({ block: 'start' }); });
+    mapMatch(filt);
+  }
+  // light up walls that have routes matching the non-location filters, on both maps and on the wall chips
+  function filtDesc() {
+    var d = Object.keys(F.tags);
+    if (F.gmin > 0 || F.gmax < 10) d.push(F.gmin === F.gmax ? G[F.gmin] : G[F.gmin] + '–' + G[F.gmax]);
+    Object.keys(F.bd).forEach(function (k) { d.push(BD[k][0]); });
+    Object.keys(F.len).forEach(function (k) { d.push(LEN[k]); });
+    Object.keys(F.sun).forEach(function (k) { d.push(SUN[k][0]); });
+    return d.join(' · ');
+  }
+  function mapMatch(filt) {
+    var m = {}, nw = 0, nr = 0;
+    D.walls.forEach(function (w) { var k = w.routes.filter(function (r) { return routeOk(r, w, true); }).length; m[w.n] = k; if (k) { nw++; nr += k; } });
+    ['svg', 'fsvg'].forEach(function (id) {
+      var s = document.getElementById(id); s.classList.toggle('filt', filt);
+      s.querySelectorAll('.pin').forEach(function (p) {
+        var k = m[p.dataset.n]; p.classList.toggle('match', filt && k > 0); p.classList.toggle('nomatch', filt && !k);
+        p.querySelector('.cnt text').textContent = k;
+      });
+    });
+    document.querySelectorAll('#fLoc .wallchip').forEach(function (ch) {
+      var w = byN[ch.dataset.k], k = m[w.n];
+      ch.classList.toggle('nm', filt && !k);
+      ch.querySelector('b').textContent = filt ? k + '/' + w.routes.length : w.routes.length;
+    });
+    var txt = filt ? '按「' + esc(filtDesc()) + '」：<b>' + nw + '</b> 面墙有符合的线（共 ' + nr + ' 条）。亮着的墙右上角数字是条数，灰掉的没有。' : '';
+    var fh = document.getElementById('fmapHint'); fh.hidden = !filt; fh.innerHTML = txt;
+    var mh = document.getElementById('mapHint'); mh.hidden = !filt;
+    mh.innerHTML = txt + '<a href="#routes">改筛选</a><button type="button" id="mhClr">清除</button>';
+    var mc = document.getElementById('mhClr'); if (mc) mc.addEventListener('click', function () { F = blank(); apply(); });
   }
 
   /* ---------- tabs / routing ---------- */
