@@ -123,7 +123,7 @@ svg .vcl { font-size: 12px; fill: var(--muted); paint-order: stroke; stroke: var
 .ticks span { position: absolute; left: calc(14px + (100% - 28px) * var(--i) / 10); transform: translateX(-50%); white-space: nowrap; }
 .resbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--tabh) + 1px); z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); margin-top: .8rem; padding-block: .5rem; display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .8rem; font-size: .88rem; }
 .resbar b { font-family: var(--font-num); }
-.resbar .act { margin-left: auto; display: flex; gap: .5rem; }
+.resbar .act { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
 .resbar button { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: .3rem .7rem; min-height: 36px; cursor: pointer; font-size: .84rem; }
 @media (max-width: 700px) { .resbar { top: env(safe-area-inset-top, 0px); } }
 .empty { color: var(--muted); padding: 1rem 0; }
@@ -165,6 +165,15 @@ svg.filt .pin.match circle.b { stroke: var(--fg); stroke-width: 3; }
 .wnum { font-family: var(--font-num); font-weight: 700; color: var(--pin-fg); background: var(--c); width: 1.9rem; height: 1.9rem; border-radius: 50%; display: grid; place-items: center; font-size: .95rem; flex: none; }
 .whead h4 { margin: 0; font-size: 1.15rem; font-weight: 900; line-height: 1.3; }
 .pills { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .45rem; }
+/* collapsible wall cards: header (name, pills, grade bar) always shown, the rest folds */
+.wtop { cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 8px; }
+.wtop:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.whead .chev { margin-left: auto; flex: none; width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 50%; background: var(--tag-bg); color: var(--muted); transition: transform .15s; }
+.whead .chev::before { content: ''; width: .5rem; height: .5rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); }
+.wall:not(.open) .chev { transform: rotate(-90deg); }
+.wall:not(.open) .wbody { display: none; }
+.wbody { margin-top: .2rem; }
+.wbtns { display: flex; flex-wrap: wrap; gap: 1.2rem; }
 .pill { font-size: .74rem; padding: .05rem .55rem; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
 .pill.in { color: var(--p2); border-color: currentColor; } .pill.out { color: var(--good); border-color: currentColor; }
 .pill.hit { color: var(--accent); border-color: currentColor; font-weight: 700; }
@@ -556,14 +565,16 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
     var gdist = '<div class="gdist" aria-label="难度分布"><div class="gbar">' + gc.map(function (c, i) { return c ? '<i class="g' + i + '" style="width:' + (c / gt * 100).toFixed(1) + '%"></i>' : ''; }).join('') + '</div>' +
       '<div class="glg">' + gc.map(function (c, i) { return c ? '<span><i class="g' + i + '"></i>' + GL[i] + ' <b>' + c + '</b> 条 · ' + Math.round(c / gt * 100) + '%</span>' : ''; }).join('') + '</div></div>';
     return '<article class="wall" id="w-' + w.n + '" style="--c:' + col(l) + '">' +
-      '<div class="whead"><span class="wnum">' + w.n + '</span><h4>' + esc(w.name) + '</h4></div>' +
+      '<div class="wtop" role="button" tabindex="0" aria-expanded="false" aria-controls="wb-' + w.n + '">' +
+      '<div class="whead"><span class="wnum">' + w.n + '</span><h4>' + esc(w.name) + '</h4><span class="chev" aria-hidden="true"></span></div>' +
       '<div class="pills"><span class="pill ' + (w.access === '内' ? 'in' : 'out') + '">' + (w.access === '内' ? '环路内 · 需预约' : '环路外 · 不用预约') + '</span>' +
-      '<span class="pill">热度第 ' + w.n + ' · ' + w.heat + ' 票</span><span class="pill">' + SUN[w.sun][0] + '</span><span class="pill">运动线 ' + sport + ' · 共 ' + w.routes.length + ' 条</span><span class="pill hit" data-hit hidden></span></div>' + gdist +
+      '<span class="pill">热度第 ' + w.n + ' · ' + w.heat + ' 票</span><span class="pill">' + SUN[w.sun][0] + '</span><span class="pill">运动线 ' + sport + ' · 共 ' + w.routes.length + ' 条</span><span class="pill hit" data-hit hidden></span></div>' + gdist + '</div>' +
+      '<div class="wbody" id="wb-' + w.n + '">' +
       '<p class="about">' + esc(w.about) + '</p>' +
       '<details class="more-info"><summary>朝向和进场（' + esc(WALK[w.name]) + '）</summary><dl class="winfo"><div><dt>朝向 / 阳光</dt><dd>' + esc(w.sun_txt) + '</dd></div><div><dt>进场</dt><dd>' + esc(w.approach) + '</dd></div></dl></details>' +
       '<div class="wlinks"><a href="' + esc(w.url) + '" target="_blank" rel="noopener">MP 页面 ↗</a><a href="https://www.google.com/maps/search/?api=1&query=' + w.lat + ',' + w.lon + '" target="_blank" rel="noopener">Google 地图 ↗</a></div>' +
       '<div class="wtags">' + top.map(function (t) { return '<span class="tag m">' + esc(t) + ' ×' + counts[t] + '</span>'; }).join('') + '</div>' +
-      '<ul class="routes">' + w.routes.map(routeHTML).join('') + '</ul><button type="button" class="back totop">↑ 回到筛选（顶部）</button></article>';
+      '<ul class="routes">' + w.routes.map(routeHTML).join('') + '</ul><div class="wbtns"><button type="button" class="back wclose">▲ 收起这面墙</button><button type="button" class="back totop">↑ 回到筛选（顶部）</button></div></div></article>';
   }
 
   /* ---------- filters ---------- */
@@ -654,7 +665,13 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
     document.getElementById('none').hidden = shownR > 0;
     var filt = styleOn();
     document.getElementById('resbar').innerHTML = '<span>显示 <b>' + shownW + '</b> 面墙 · <b>' + shownR + '</b> 条线' + (on ? '（共 ' + total + '）' : '') + '</span>' +
-      '<span class="act">' + (on ? '<button type="button" id="clr">清除筛选</button>' : '') + (filt ? '<button type="button" id="toMap">看地图</button>' : '') + '<button type="button" id="toF">↑ 筛选</button></span>';
+      '<span class="act">' + (on ? '<button type="button" id="clr">清除筛选</button>' : '') + (filt ? '<button type="button" id="toMap">看地图</button>' : '') + '<button type="button" id="expAll">全部展开</button><button type="button" id="toF">↑ 筛选</button></span>';
+    document.getElementById('expAll').addEventListener('click', function () {
+      var open = !this.dataset.open;
+      document.querySelectorAll('#groups .wall:not([hidden])').forEach(function (w) { setOpen(w, open); });
+      syncExp();
+    });
+    syncExp();
     var c = document.getElementById('clr'); if (c) c.addEventListener('click', function () { F = blank(); apply(); });
     document.getElementById('toF').addEventListener('click', toTop);
     var tm = document.getElementById('toMap'); if (tm) tm.addEventListener('click', function () { document.getElementById('fmapD').open = true; document.getElementById('fmapHint').scrollIntoView({ block: 'start' }); });
@@ -706,7 +723,7 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
       show('routes');
       var el = document.getElementById(h);
       if (el && el.hidden) { F = blank(); apply(); }
-      if (el) { el.scrollIntoView({ block: 'start' }); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); }
+      if (el) { setOpen(el, true); syncExp(); el.scrollIntoView({ block: 'start' }); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); }
       return;
     }
     var t = TABS.indexOf(h) >= 0 ? h : 'map';
@@ -721,7 +738,31 @@ footer { color: var(--muted); font-size: .8rem; padding-block: 1rem 2rem; }
   routeHash();
 
   function toTop() { window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
-  document.getElementById('groups').addEventListener('click', function (e) { if (e.target.closest('.totop')) toTop(); });
+  function setOpen(el, open) {
+    el.classList.toggle('open', open);
+    el.querySelector('.wtop').setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  var grp = document.getElementById('groups');
+  grp.addEventListener('click', function (e) {
+    if (e.target.closest('.totop')) { toTop(); return; }
+    var w = e.target.closest('.wall'); if (!w) return;
+    if (e.target.closest('.wclose')) {
+      setOpen(w, false); syncExp();
+      if (w.getBoundingClientRect().top < 0) w.scrollIntoView({ block: 'start' });
+      return;
+    }
+    if (e.target.closest('.wtop') && !e.target.closest('a')) { setOpen(w, !w.classList.contains('open')); syncExp(); }
+  });
+  grp.addEventListener('keydown', function (e) {
+    var t = e.target.closest('.wtop'); if (!t || e.target !== t || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault(); var w = t.closest('.wall'); setOpen(w, !w.classList.contains('open')); syncExp();
+  });
+  function syncExp() {
+    var b = document.getElementById('expAll'); if (!b) return;
+    var vis = document.querySelectorAll('#groups .wall:not([hidden])'), allOpen = vis.length > 0;
+    vis.forEach(function (w) { if (!w.classList.contains('open')) allOpen = false; });
+    b.textContent = allOpen ? '全部收起' : '全部展开'; b.dataset.open = allOpen ? '1' : '';
+  }
   (window.__RR_DATA ? Promise.resolve(window.__RR_DATA) : fetch('data/crags.json').then(function (r) { return r.json(); })).then(function (d) {
     D = d; var byName = {};
     document.getElementById('sub').textContent = d.walls.length + ' 面墙 · ' + d.walls.reduce(function (a, w) { return a + w.routes.length; }, 0) + ' 条 ≤5.9 运动线和顶绳线 · 11 月 26–27 日';

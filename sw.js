@@ -1,5 +1,5 @@
 // Cache-first with background refresh: never waits on a weak canyon signal.
-var V = 'rr-8ceecb40ec';
+var V = 'rr-afede1e921';
 var CORE = ['./', 'index.html', 'data/crags.json', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(V).then(function (c) { return c.addAll(CORE); }).then(function () { return self.skipWaiting(); }));
